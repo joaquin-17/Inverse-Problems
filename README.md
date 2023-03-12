@@ -1,2 +1,2 @@
 # Inverse-Problems
-General repository with theory, examples and Codes for solving inverse problems
+General repository with theory, examples and codes for solving inverse problems
