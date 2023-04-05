@@ -26,7 +26,7 @@ ml1=IRLS(y,A,[0.0,0.0], norma=L1weights,ϵ=1e-4, Ni=5)
 #dl1=A*ml1;
 mcn=IRLS(y,A,[0.0,0.0], norma=Cauchyweights,ϵ=1e-4, Ni=5)
 
-mhn=IRLS(y,A,[0.0,0.0], norma=Huberweigths,ϵ=1e-4, Ni=5)
+mhn=IRLS(y,A,[0.0,0.0], norma=Huberweights,ϵ=1e-4, Ni=5)
 
 
 

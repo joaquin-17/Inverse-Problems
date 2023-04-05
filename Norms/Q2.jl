@@ -99,18 +99,18 @@ function IRLSCG(t::Vector,D::Matrix,m0::Vector; ϵ::Real=1e-9, β::Real=25.0 , �
         wz=(1 ./(1 .+ (v/δ).^2  .+ ϵ ));
         #wx=wx./maximum(wx); wz=wz./maximum(wz);
         println(wz);
-        A=vcat(D, β*wx.*Dx, β*wz.*Dz); #Concatenation of forward models. Left side of the equation.
+        A=vcat(D, λ*wx.*Dx, λ*wz.*Dz); #Concatenation of forward models. Left side of the equation.
         y=vcat(t,Dxm0,Dzm0); #right side of the equation
         #m=(A'*A + λ*Dx'*Wx*Dx + λ*Dz'*Wz*Dz)\(A'*y);
         m=cgaq(A,y,Ni)
         println("Outer loop i=$i")
     end
 
-    return m
+    return m, wx,wz
 end
 
 
-msol=IRLSCG(t,D,m0,β=25,δ=0.0001,Ne=10);
+msol, wx, wz=IRLSCG(t,D,m0,β=25,δ=0.0001,Ne=10);
 #dh=reshape(dh,(gz,gx-1));
 #dv= reshape(dv,(gz-1,gx));
 msol=reshape(msol,(gz,gx));
@@ -150,7 +150,7 @@ xlabel("x[m]", fontsize=13)
 ylabel("z[m]", fontsize=13)
 colorbar(shrink=0.65, orientation="vertical", label="[m/s]")
 tight_layout()
-
+#=
 
 #Examples to fit mu to the level of noise variance.
 
@@ -182,7 +182,7 @@ for i=1:length(β)
    # print("β=$k")
 end
 
-
+=#
 
 #=
 fig, axs = plt.subplots(2, 2)
