@@ -116,11 +116,11 @@ d_rec=F'*(m);
 error= T*d_rec .- y;
 rel_error = norm(error,2)/ norm(y,2);
 
-
-#=
 dt=1;
 tp=dt*collect(0:1:length(d_obs)-1);
 
+
+#=
 
 
 p =1*collect(-2:0.1:2);
@@ -142,7 +142,6 @@ for i=1:length(λ)
     modelnorm[i] = norm( m - m0 ,2)^2;
     chi2[i]=misfit[i]/(σ^2);
 end
-
 =#
 
 
@@ -190,7 +189,7 @@ plot(tp,d_rec, label="d_rec", c="green");
 
 xlabel("Time [sec]")
 ylabel("Amplitude")
-title("Comparison: CGLS")
+title("Comparison: IRLS-CGLS")
 plt.grid("True")
 legend()
 
