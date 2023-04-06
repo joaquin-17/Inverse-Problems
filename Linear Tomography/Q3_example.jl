@@ -1,3 +1,4 @@
+
 using DelimitedFiles, PyPlot, Statistics, LinearAlgebra
 
 include("LinearTomography.jl")
@@ -46,56 +47,61 @@ for ix=1:grid[2]
     end
 end
 
-tm = D*m0;
-δt = t .- tm;
 
 
-μ=2;
 
-m,v=DLS(D,t,μ,m0,grid[2],grid[1]);
+μ=10; # Define a new μ for problem 3.
 
-tp=D*m[:]; #t predicted
+u=Matrix(μ*I, gz*gx, gz*gx)
 
+#Initial slowness model:
+slo=reshape(m0,(gz,gx))
+(Dx,Dz)=Derivatives(slo,1);  
+
+
+
+βx=100#6.80;
+βz=βx;
+
+Dxm0=βx*(Dx*m0);
+Dzm0=βz*(Dz*m0);
+#Build aumented forward:
+
+A=vcat(D,u,βx*Dx,βz*Dz); #Concatenation of forward models. Left side of the equation.
+y=vcat(t,μ*m0,Dxm0,Dzm0) #right side of the equation
+
+#Inversion using CG:
+nt=250;
+m=cgaq(A,y,nt)
+m=reshape(m,(gz,gx));
+m=reshape(m,(gz,gx));
+
+v = 1 ./ m;
+
+
+tp=A[1:length(t),:]*m[:]; #t predicted
 σ=4e-4 #Noise variance;
-misfit= (norm(t .- tp,2)).^2
-modelnorm = norm( m[:] .- m0 ,2).^2
-chi2=misfit/(σ^2)
+misfit= (norm(t .- tp,2)).^2;
+modelnorm = norm( m[:] .- m0 ,2).^2;
+chi2=misfit/(σ^2);
 
 
 
 clf()
-figure(1, figsize=(10,15))
+figure(1, figsize=(10,20))
 subplot(121);
-title("Slowness", fontsize=15)
+title("Slowness with derivatives, β=100 ", fontsize=15)
 imshow(m, extent=[0.0, 300.0, 400.0, 0.0], cmap="jet", interpolation="bilinear")
-xlabel("x [m]", fontsize=13)
-ylabel("z [m]", fontsize=13)
+xlabel("x[m]", fontsize=13)
+ylabel("z[m]", fontsize=13)
 colorbar(shrink=0.65, orientation="vertical", label="[s/m]")
 subplot(122);
-title("Velocity", fontsize=15)
+title("Velocity with derivatives, β=100 ", fontsize=15)
 imshow(v,extent=[0.0, 300.0, 400.0,0.0] ,cmap="jet", interpolation="bilinear")
-xlabel("x [m]", fontsize=13)
-ylabel("z [m]", fontsize=13)
+xlabel("x[m]", fontsize=13)
+ylabel("z[m]", fontsize=13)
 colorbar(shrink=0.65, orientation="vertical", label="[m/s]")
 tight_layout()
 
 
-
-
-
-
-#gcf()
-#println("misfit:")
-#println( misfit)
-#println("modelnorm:")
-#println( modelnorm)
-#println("chi2:")
-#println( chi2)
-
-
-#axs[1, 1].plot(μ[1:50],chi2[1:50],c="r");
-#axs[1,1].plot(μ[1:50],chi2[1:50],"ko");
-#axs[1,1].set_title("χ² vs μ",)
-#axs[1,1].set_xlabel("μ")
-#axs[1,1].set_ylabel("χ² ≈ N")
-#axs[1,1].grid("True")
+#Examples to fit mu to the level of noise variance.
