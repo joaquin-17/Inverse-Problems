@@ -1,84 +1,12 @@
 
 using FFTW, LinearAlgebra, Statistics, DelimitedFiles, PyPlot
 
-data=readdlm("/home/aacedo/Desktop/GEOPH531/Inverse-Problems/Fourier Reconstruction/data/data_to_reconstruct.txt");
+data=readdlm("C:\\Users\\Joaquin\\Desktop\\IP\\Inverse-Problems\\Inverse-Problems\\Fourier Reconstruction\\data\\data_to_reconstruct.txt");
 t=data[:,1]; s_real=data[:,2]; s_imag=data[:,3];
 
 signal= s_real .+ im*s_imag;
 
 
-function SamplingOp(x::Vector, Ni::Int; flag="forward")
-
-    No=length(x);
-    T=zeros(Int,(No,Ni));
-
-    for i=1:size(T,1);
-        T[i,Int(t[i])+1] = 1
-    end
-
-    if flag == "forward"
-
-        return T
-
-    elseif flag == "adjoint"
-
-        return copy(T')
-
-
-    else 
-        error("Specify flag= 'forward' or flag= 'adjoint'.")
-    end
-
-    
-end
-
-
-function FourierOp(in::Vector; flag="forward")
-
-
-    if flag == "forward" #Synthetize data from coefficients
-
-        d= bfft(in)
-        return d;
-
-    elseif flag == "adjoint"
-
-        m=fft(in);
-        return m;
-
-    else
-        error("Specify flag= 'forward' or flag= 'adjoint'.")
-    end
-end
-
-
-
-M = 512;
-T=SamplingOp(t,512,flag="forward")
-#adj=DFT_matrix(M,k,n);
-x1=randn(M);
-y1= T*x1;
-
-y2=randn(390);
-Th=SamplingOp(t,512,flag="adjoint");
-
-x2= Th*y2;
-
-dot_x = x1'*x2
-dot_y = y1'*y2
-      
-
-
-M = 512;
-x1=randn(M);
-y1=FourierOp(x1, flag="adjoint")
-y2=randn(M);
-x2=FourierOp(y2,flag="adjoint")
-
-
-dot_x = x1'*x2;
-dot_y = y1'*y2;
-      
 
 
 function FFTOp(in,adj;normalize=true)
@@ -95,21 +23,8 @@ end
 
 function WeightingOp(in,adj;w=1.0)
 
-    if adj
-
         return in.*w;
-
-    else
-
-        W=diagm(w);
-        Wi=inv(W);
-
-        return in.*diag(Wi)
-
-    end
 end
-
-
 
 
 
@@ -118,7 +33,6 @@ function InnerProduct(in1,in2)
     return convert(Float32,real(sum(conj(in1[:]).*in2[:])))
 
 end
-
 
 
 function LinearOperator(in,operators,parameters;adj=true)
@@ -204,7 +118,7 @@ function IRLS(d,operators,parameters;Ni=10,Ne=5,μ=0.5)
 		v,cost1 = CGLS(m0,d,operators,parameters,Ni=Ni,μ=μ,tol=1.0e-15)
 		append!(cost,cost1)
 		m = v .* weights
-		weights= 1.0 ./ (abs.(m) .+ 0.0001);
+		weights= sqrt.(1.0 ./ (abs.(m) .+ 0.0001));
         #weights = abs.(m./(abs.(m[:])))
 		parameters[end][:w] = weights
 	end
@@ -231,18 +145,35 @@ function Sampling(in::Vector)
 end
 
 
+function SamplingMatrix(x::Vector, Ni::Int)
 
+    No=length(x);
+    T=zeros(Int,(No,Ni));
+
+    for i=1:size(T,1);
+        T[i,Int(t[i])+1] = 1
+    end
+    return T
+    
+end
+
+T=SamplingMatrix(t,512)
 y=signal;
 d_obs=T'y;
 S=Sampling(d_obs);
 operators=[WeightingOp, FFTOp, WeightingOp]
 parameters=[Dict(:w=> S), Dict(:normalize=>true), Dict(:w =>ones(length(d_obs)))];
-μ=0.15;
-Ne=3;
+μ=0.001;
+Ne=20;
 Nint=100;
 m0=zero(d_obs)
 
 m, J= IRLS(d_obs,operators,parameters; Ni=Nint,Ne=Ne,μ=μ)
+
+d_rec=F'*(m);
+error= T*d_rec .- y;
+rel_error = norm(error,2)/ norm(y,2);
+
 
 #y=signal;
 #No=length(y); Ni=512; # observed and ideal lengths.
@@ -250,4 +181,69 @@ m, J= IRLS(d_obs,operators,parameters; Ni=Nint,Ne=Ne,μ=μ)
 #m, J =IRLS(A,y,Niter=15,λ=0.1);
 #d_obs=T'*y;
 #m0=F*(d_obs);
-#d_rec=F'*(m);
+
+
+
+
+
+figure(1);
+
+subplot(221);
+plot(tp,d_obs,label="d_obs")
+xlabel("Time [sec]")
+ylabel("Amplitude")
+ylim([-0.4,0.4])
+
+title("Observed")
+plt.grid("True")
+
+subplot(222); 
+plot(abs.(FFTOp(d_obs,true)),label="d_obs")
+xlabel("k")
+ylabel("Amplitude")
+title("Observed: Amplitude Spectrum")
+plt.grid("True")
+
+
+subplot(223);
+plot(tp,d_rec,label="d_obs",c="green")
+xlabel("Time [sec]")
+ylabel("Amplitude")
+ylim([-0.4,0.4])
+title("Recovered")
+plt.grid("True")
+
+subplot(224);
+plot(abs.(FFTOp(d_rec,true)),label="d_obs",c="green")
+xlabel("k")
+ylabel("Amplitude")
+title("Recovered : Amplitude Spectrum")
+plt.grid("True")
+
+tight_layout()
+
+
+
+figure(2);
+plot(tp,d_obs, label="d_obs");
+plot(tp,d_rec, label="d_rec", c="green");
+
+xlabel("Time [sec]")
+ylabel("Amplitude")
+title("Comparison: CGLS")
+plt.grid("True")
+legend()
+
+markers_on= chi2[18];
+figure(3);
+loglog(λ,chi2,c="k");
+loglog(λ,chi2,"o");
+xlabel("λ")
+ylabel("χ²≈ N")
+ylim([0,1200]) ; xlim([0,10])
+title("χ² test: ISTA")
+aux1= ones(length(λ))*chi2[18];
+aux2= ones(length(chi2))*λ[18];
+plot(λ,aux1,c="purple");
+plot(aux2,chi2,c="purple");
+plt.grid("True")
