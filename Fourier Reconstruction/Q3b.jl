@@ -1,7 +1,7 @@
 
 using FFTW, LinearAlgebra, Statistics, DelimitedFiles, PyPlot
 
-data=readdlm("/home/aacedo/Desktop/GEOPH531/Inverse-Problems/Fourier Reconstruction/data/data_to_reconstruct.txt");
+data=readdlm("C:\\Users\\Joaquin\\Desktop\\IP\\Inverse-Problems\\Inverse-Problems\\Fourier Reconstruction\\data\\data_to_reconstruct.txt");
 t=data[:,1]; s_real=data[:,2]; s_imag=data[:,3];
 
 signal= s_real .+ im*s_imag;
@@ -80,7 +80,7 @@ end
 
 function IRLS(A,y,m0;Ne=25,Ni=150,λ=0.5,ϵ= 0.0001)
 
-    m=ones(ComplexF64,length(m0));
+    m=zeros(ComplexF64,length(m0));
     J = zeros(Float64,Ne);
    # G = A'*A  #  FT'TF' 
 
@@ -106,13 +106,24 @@ F=DFT_matrix(Ni);
 T=SamplingOp(signal,Ni)
 A= T*F';
 m0=zeros(Ni);
-m, J =IRLS(A,y,m0,Ne=50,Ni=100,λ=0.31);
+m, J =IRLS(A,y,m0,Ne=50,Ni=100,λ=0.11);
 d_obs=T'*y;
 m0=F*(d_obs);
 d_rec=F'*(m);
 
+
+d_rec=F'*(m);
+error= T*d_rec .- y;
+rel_error = norm(error,2)/ norm(y,2);
+
+dt=1;
+tp=dt*collect(0:1:length(d_obs)-1);
+
+
 #=
-p =1*collect(-2:0.5:2);
+
+
+p =1*collect(-2:0.1:2);
 λ = 10.0 .^(p);
 misfit=zeros(Float64,length(λ));
 modelnorm=zeros(Float64,length(λ));
@@ -120,8 +131,10 @@ chi2=zeros(Float64,length(λ));
 σ=0.05;
 #k=0;
 
+
 for i=1:length(λ)
-    m,J=IRLS(A,y,Niter=45,λ= λ[i])
+    m0=zeros(512)
+    m, J =IRLS(A,y,m0,Ne=50,Ni=100, λ=λ[i]);
     d_pred=T*(F'*(m));
     m=DFT_matrix(length(y))*(d_pred);
     m0=DFT_matrix(length(y))*(y);
@@ -129,5 +142,67 @@ for i=1:length(λ)
     modelnorm[i] = norm( m - m0 ,2)^2;
     chi2[i]=misfit[i]/(σ^2);
 end
-
 =#
+
+
+figure(1);
+
+subplot(221);
+plot(tp,d_obs,label="d_obs")
+xlabel("Time [sec]")
+ylabel("Amplitude")
+ylim([-0.4,0.4])
+
+title("Observed")
+plt.grid("True")
+
+subplot(222); 
+plot(abs.(F*d_obs),label="d_obs")
+xlabel("k")
+ylabel("Amplitude")
+title("Observed: Amplitude Spectrum")
+plt.grid("True")
+
+
+subplot(223);
+plot(tp,d_rec,label="d_obs",c="green")
+xlabel("Time [sec]")
+ylabel("Amplitude")
+ylim([-0.4,0.4])
+title("Recovered")
+plt.grid("True")
+
+subplot(224);
+plot(abs.(F*d_rec),label="d_obs",c="green")
+xlabel("k")
+ylabel("Amplitude")
+title("Recovered : Amplitude Spectrum")
+plt.grid("True")
+
+tight_layout()
+
+
+
+figure(2);
+plot(tp,d_obs, label="d_obs");
+plot(tp,d_rec, label="d_rec", c="green");
+
+xlabel("Time [sec]")
+ylabel("Amplitude")
+title("Comparison: IRLS-CGLS")
+plt.grid("True")
+legend()
+
+markers_on= chi2[18];
+figure(3);
+loglog(λ,chi2,c="k");
+loglog(λ,chi2,"o");
+xlabel("λ")
+ylabel("χ²≈ N")
+ylim([0,3300]) ; xlim([0,10])
+title("χ² test: CGLS")
+aux1= ones(length(λ))*chi2[20];
+aux2= ones(length(chi2))*λ[20];
+plot(λ,aux1,c="green");
+plot(aux2,chi2,c="green");
+plt.grid("True")
