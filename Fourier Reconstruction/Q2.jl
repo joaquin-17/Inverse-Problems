@@ -72,7 +72,8 @@ m, J =IRLS(A,y,Niter=15,λ=0.10);
 d_obs=T'*y;
 m0=F*(d_obs);
 d_rec=F'*(m);
-diff= signal .- T*d_rec;
+error= T*d_rec .- y;
+rel_error = norm(error,2)/ norm(y,2);
 
 
 p =1*collect(-2:0.1:2);
