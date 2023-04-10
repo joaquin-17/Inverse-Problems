@@ -130,15 +130,15 @@ function ADMM_CG(A,y,m0; ρ= 1.0, λ=0.5,tol=1e-8, Ni=150, Ne=50)
     I = diagm( ones(size(A,2)));
     Ac= vcat(A, sqrt(ρ)*I);
     yc=vcat(y, sqrt(ρ)* (z .- u))
-
+    x=zero(u)
     for k=1:Ni;
         yc=vcat(y, sqrt(ρ)* (z-u));
         x= cgaq(Ac,yc,Ne) #nv(G +ρ*I)*(A'*(y) .+ ρ*(z - u)); #x-update
         z= SoftThresholding.(x .+ u ,ρ,λ)  # z-update
-        u= u .+ (x-z); #dual update, lagrange multiploier
+         u= u .+ (x-z); #dual update, lagrange multiploier
     end
 
-    return z;
+    return z, x;
 
 end
 
@@ -284,19 +284,20 @@ end
 
 function ADMM_CGLS(d_obs,operators,parameters; ρ= 1.0, λ= 1.8,tol=1e-8, Ni=50,Ne=50)
     
-    
+    ρ=ρ;
     u=zeros(length(m0)); 
     z=copy(m0);
-    
-    for k=1:Ni;
-
-        d_obs=vcat(d_obs, ρ*(z-u));
-        x, J= CGLS(d_obs,operators, parameters; μ=λ , Ni=Ni, tol=1.0e-15)
-        z= SoftThresholding.(x .+ u ,ρ,λ)  # z-update
-        u= u .+ (x-z); #dual update, lagrange multiploier
+    w=zero(u);
+    for k=1:Ni;  
+        b=  LinearOperator(z.+ u,operators, parameters, adj=false) .+ d_obs;
+        w, J= CGLS(b,operators, parameters; μ= ρ, Ni=Ne, tol=1.0e-15)
+       # x = w - (u .+ z);
+        z= SoftThresholding.(w.+ u,ρ,λ)  # z-update
+        u= u .+ (w-z); #dual update, lagrange multiploier
     end
-
-    return z;
+    
+     
+    return z, w;
 
 end
 
@@ -307,6 +308,6 @@ parameters=[Dict(:w=>S), Dict(:normalize=>true)];
 
 
 #m1= ADMM(A,y,m0, ρ= 1.0 , λ=1.8,Ni=50) # This worlks
-#m2= ADMM_CG(A,y,m0, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50) # This worlks
-m3= ADMM_CGLS(d_obs,operators,parameters)
+m2,x= ADMM_CG(A,y,m0, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50) # This worlks
+m3,w= ADMM_CGLS(d_obs,operators,parameters, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50)
 
