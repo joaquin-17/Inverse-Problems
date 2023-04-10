@@ -116,23 +116,26 @@ end
 
 
 
-function ADMM_CG(A,y,m0; ρ= 1.0, λ=0.5,tol=1e-8, Ni=150)
+function ADMM_CG(A,y,m0; ρ= 1.0, λ=0.5,tol=1e-8, Ni=150, Ne=50)
 
     
     u=zeros(length(m0)); 
     z=copy(m0);
     I = diagm( ones(size(A,2)));
     Ac= vcat(A, sqrt(ρ)*I);
-    yc=vcat(y, sqrt(ρ)* (z- u))
+    yc=vcat(y, sqrt(ρ)* (z .- u))
     #G=A'*A;
     #I = diagm( ones(size(G,1)));
 
     
     for k=1:Ni;
 
-        x= cgaq(Ac,yc,200) #nv(G +ρ*I)*(A'*(y) .+ ρ*(z - u)); #x-update
-        z= SoftThresholding.(x.+u ,ρ,λ)  # z-update
-        u= u + (x-z); #dual update, lagrange multiploier
+
+        Ac= vcat(A, sqrt(ρ)*I);
+        yc=vcat(y, sqrt(ρ)* (z-u));
+        x= cgaq(Ac,yc,Ne) #nv(G +ρ*I)*(A'*(y) .+ ρ*(z - u)); #x-update
+        z= SoftThresholding.(x .+ u ,ρ,λ)  # z-update
+        u= u .+ (x-z); #dual update, lagrange multiploier
 
     end
 
@@ -144,4 +147,4 @@ end
 
 
 m1= ADMM(A,y,m0, ρ= 1.0 , λ=1.8,Ni=50) # This worlks
-m2= ADMM_CG(A,y,m0, ρ= 1.0 , λ=1.8, Ni=50) # This worlks
+m2= ADMM_CG(A,y,m0, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50) # This worlks
