@@ -99,7 +99,7 @@ function cgaq(A,y,it)
     x=zeros(size(A,2));
 
     #it=length(x)
-    s=y.-(A*x);              #s represents the residual error, this lives in the space of the data
+    s=y.-(A*x);              #s represenats the residual error, this lives in the space of the data
     p=A'*s;                   #By applying A', we are moving the residual back to the model space. Getting a model error(?)
     r=p;                      #    ??
     q=A*p                     #We are taking the model error(?) and we are projecting it back to the data space.
@@ -131,14 +131,14 @@ function ADMM_CG(A,y,m0; ρ= 1.0, λ=0.5,tol=1e-8, Ni=150, Ne=50)
     Ac= vcat(A, sqrt(ρ)*I);
     yc=vcat(y, sqrt(ρ)* (z .- u))
     x=zero(u)
-    for k=1:Ni;
+    for k=1:Ne;
         yc=vcat(y, sqrt(ρ)* (z-u));
-        x= cgaq(Ac,yc,Ne) #nv(G +ρ*I)*(A'*(y) .+ ρ*(z - u)); #x-update
+        x= cgaq(Ac,yc,Ni) #nv(G +ρ*I)*(A'*(y) .+ ρ*(z - u)); #x-update
         z= SoftThresholding.(x .+ u ,ρ,λ)  # z-update
-         u= u .+ (x-z); #dual update, lagrange multiploier
+        u= u .+ (x-z); #dual update, lagrange multiploier
     end
 
-    return z, x;
+    return z;
 
 end
 
@@ -235,11 +235,47 @@ end
 
 
 
+function cgaq_op(y, operators, parameters,  it)
+    
+    A=LinearOperator;
+
+
+    error=zeros(it)
+    x=zeros(length(y));
+
+    #it=length(x)
+    s=y.-A(x,operators,parameters, adj=false);   
+               #s represenats the residual error, this lives in the space of the data
+     p=A(s,operators,parameters, adj=true);                   #By applying A', we are moving the residual back to the model space. Getting a model error(?)
+    r=p;                      #    ??
+    q=A(p,operators,parameters,adj=false)                     #We are taking the model error(?) and we are projecting it back to the data space.
+    old=r'*r;                 #norm squared of the model error(?) are we looking to make this small as well?
+   #Conjugate gradient loop
+   for k in 1:it
+        alpha=(r'*r)/(q'*q);   #Ratio between the sq norm of the model error(?) and the sqnorm of its projection onto data space
+        x=x+alpha.*p;          #We update our initial model guess multiplying alpha by the original model error (?)
+        s=s-alpha.*q;          #We update the data error subtracting alpha*model error projected on data
+        r= A(s,operators,parameters, adj=true);               #We project the updated data error into the model space.
+        new=r'*r;
+        beta=new/old;          #Ratio between the new and old norm of the model error (?)
+        old=new;               #Variable update
+        p = r.+(beta.*p);      #Updating the model error by advancing using the ratio between new and old norm.
+        q= A(p,operators,parameters,adj=false);
+        println("Iteration",k)
+        #error[k]= new                #Taking the new model error and projecting it into the data space.
+   end
+   return x
+end
+
+
+
+
+
 function CGLS(d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
 
     m=zeros(length(d_obs));
     r= d_obs - LinearOperator(m,operators,parameters,adj=false);
-    s =  LinearOperator(r,operators,parameters,adj=true) -μ*m;
+    s =  LinearOperator(r,operators,parameters,adj=true) - μ*m;
     p=copy(s);
 
     gamma= InnerProduct(s,s);
@@ -261,7 +297,7 @@ function CGLS(d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
         alpha= gamma/delta;
         m = m + alpha*p;
         r = r - alpha*q;
-        s =  LinearOperator(r,operators,parameters,adj=true) -μ*m;
+        s =  LinearOperator(r,operators,parameters,adj=true)  - μ*m;
         gamma1  = InnerProduct(s,s);
         norms  = sqrt(gamma1);
         beta = gamma1/gamma;
@@ -288,16 +324,16 @@ function ADMM_CGLS(d_obs,operators,parameters; ρ= 1.0, λ= 1.8,tol=1e-8, Ni=50,
     u=zeros(length(m0)); 
     z=copy(m0);
     w=zero(u);
-    for k=1:Ni;  
-        b=  LinearOperator(z.+ u,operators, parameters, adj=false) .+ d_obs;
-        w, J= CGLS(b,operators, parameters; μ= ρ, Ni=Ne, tol=1.0e-15)
-       # x = w - (u .+ z);
-        z= SoftThresholding.(w.+ u,ρ,λ)  # z-update
-        u= u .+ (w-z); #dual update, lagrange multiploier
+    for k=1:Ne;  
+        b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # thi is the problem
+        #d_obs= LinearOperator(b,operators,parameters, adj=false) 
+        w, J= CGLS(b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
+        x= w .+z .-u;
+        z= SoftThresholding.( x .+ u,ρ,λ)  # z-update
+        u= u .+ (x .-z); #dual update, lagrange multiploier
     end
-    
      
-    return z, w;
+    return z;
 
 end
 
@@ -308,6 +344,5 @@ parameters=[Dict(:w=>S), Dict(:normalize=>true)];
 
 
 #m1= ADMM(A,y,m0, ρ= 1.0 , λ=1.8,Ni=50) # This worlks
-m2,x= ADMM_CG(A,y,m0, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50) # This worlks
-m3,w= ADMM_CGLS(d_obs,operators,parameters, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50)
-
+m2= ADMM_CG(A,y,m0, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50) # This worlks
+m3= ADMM_CGLS(d_obs,operators,parameters, ρ= 1.0 , λ= 1.8, Ni=50, Ne=50)
