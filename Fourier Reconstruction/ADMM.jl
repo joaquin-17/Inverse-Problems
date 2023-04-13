@@ -268,8 +268,13 @@ function cgaq_op(y, operators, parameters,  it)
 end
 
 
+"""
+%CGLS: Solves for the minimum of J = || A x - b ||_2^2  + mu ||x||_2^2 
+%      via the method of conjugate gradients for least-squares problems. The 
+%      matrix A is given via an  operator  and apply on the flight by
+%      user-defined function "operator" with parameters "Param".
 
-
+"""
 
 function CGLS(d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
 
@@ -283,8 +288,6 @@ function CGLS(d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
     k=0;
     flag=0;
     J=zeros(Ni);
-
-
     while k < Ni && flag == 0
         
         q = LinearOperator(p,operators,parameters,adj=false);
