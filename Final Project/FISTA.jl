@@ -1,9 +1,21 @@
 
-function ErrorRMS(d_ideal, d_rec; relative= false)
+function ErrorRMS(y, yp; relative= false)
 
-           N=size(d_ideal)
-           e = d_rec .- d_ideal;
+           dev = yp .- y;
+           e_rms= sqrt(sum(dev.^2)/prod(size(y)));
 
+
+           if relative == true
+            num=e_rms; 
+            den= sqrt(sum((yp).^2));
+            p= num/den
+
+            return p
+
+           end
+
+
+           return e_rms
 
 end
 
