@@ -67,9 +67,9 @@ end
 
 """
 
-function CGLS(d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
+function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
 
-    m=zeros(size(d_obs));
+    m=zeros(size(m0));
     r= d_obs - LinearOperator(m,operators,parameters,adj=false);
     s =  LinearOperator(r,operators,parameters,adj=true) - μ*m;
     p=copy(s);
@@ -112,10 +112,11 @@ function CGLS(d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
 end
 
 
-function ADMM_CGLS(d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tolerance=1.0e-5,)
-    
+function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tolerance=1.0e-5,)
+   
+   
     ρ=ρ;
-    u=zeros(size(d_obs)); 
+    u=zeros(size(m0)); 
     z=copy(u);
     w=zero(u);
     #Initialize cost function with x0 misfit.
@@ -129,7 +130,7 @@ function ADMM_CGLS(d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tol
 
         b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # thi is the problem
         #d_obs= LinearOperator(b,operators,parameters, adj=false) 
-        w= CGLS(b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
+        w= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
         x= w .+z .-u;
         z= SoftThresholding.( x .+ u,ρ,μ)  # z-update
         u= u .+ (x .-z); #dual update, lagrange multiploier

@@ -1,11 +1,11 @@
 
 function ErrorRMS(y, yp; relative= false)
 
-           dev = yp .- y;
-           e_rms= sqrt(sum(dev.^2)/prod(size(y)));
+           dev = yp .- y; #deviation
+           e_rms= sqrt(sum(dev.^2)/prod(size(y))); #RMS deviation
 
 
-           if relative == true
+           if relative == true # % RMS deviation
             num=e_rms; 
             den= sqrt(sum((yp).^2));
             p= num/den
@@ -18,6 +18,27 @@ function ErrorRMS(y, yp; relative= false)
            return e_rms
 
 end
+
+
+
+function Error(yi, yp; relative= false)
+
+    dev = yp .- yi; #deviation
+    e=sqrt(sum( abs.((dev).^2))); 
+
+    if relative == true # % RMS deviation
+        num=e; 
+        den= sqrt(sum((yi).^2));
+        p= num/den
+     return p
+
+    end
+
+    return e
+
+end
+
+  
 
          
            
@@ -140,9 +161,9 @@ function ISTA(x0,y,operators,parameters; μ= 0.5,Ni=150,tolerance=1.0e-5)
 
         #Update point to improve convergence rate  (ISTA --> FISTA)
         
-        #t_k = t;
-        #t = (0.5)*(1.0 + sqrt(1.0 + 4.0*(t_k)^2))
-        #yk = m + (t_k-1.0)/t*(m-mk); 
+        t_k = t;
+        t = (0.5)*(1.0 + sqrt(1.0 + 4.0*(t_k)^2))
+        y_k = m + (t_k-1.0)/t*(m-m_k); 
         
         
 
@@ -150,13 +171,6 @@ function ISTA(x0,y,operators,parameters; μ= 0.5,Ni=150,tolerance=1.0e-5)
     end
     return m, J
 end
-
-
-
-
-
-
-
 
 
 

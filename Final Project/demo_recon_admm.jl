@@ -1,9 +1,11 @@
 # Reconstruction Demo
 
-using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra,SeisReconstruction
+using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra #SeisReconstruction
 
 
 include("ADMM.jl")
+include("/home/aacedo/Desktop/GitHub/Non-Uniform-Dispersed-Source-Arrays-NU-DSA-/src/DSA_Tools/Tools.jl")
+include("LocalFFTOp3d-padding.jl")
 
 
 
@@ -17,32 +19,33 @@ shot=d;
 
 shot=d[:,64,:];
 
-dobs = copy(shot);
+dobs = copy(d);
 
-nt,nx1=size(d)
+nt,nx1,nx2=size(d)
 for i1=1:nx1
-    #for i2=1:nx2
+    for i2=1:nx2
        p = rand()
             if   p < 0.5
-                dobs[:,i1] .= 0.0
+                dobs[:,i1,i2] .= 0.0
             end
-   # end
+    end
 end
 
 
 S = CalculateSampling(dobs);
-dobs = S.*shot; 
-
+dobs = S.*d; 
+patch_size=(64,32,32); #Patch size in LocalFourier Operator
+Noverlap=(32,16,16); #Overlap of patches in LocalFourier Operator
+dims=size(d); #Parameter to  ensure right dimensions with the LocalFourier transform
 
 println("3) Get parameters:")
 
-
-operators=[WeightingOp, FFTOp];
-parameters=[Dict(:w=>S), Dict(:normalize=>true)];
-
+x0 = zeros(Float64,spec_size(dobs,patch_size,Noverlap));
+operators=[WeightingOp, LocalFFTOp];
+parameters= [Dict(:w =>S),
+Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true, :padd=>false)];
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-m, J = ADMM_CGLS(dobs,operators,parameters, ρ= 0.5, μ= 1.5,Ne=150,tolerance=1.0e-4);
-
-d_rec= real(FFTOp(m,false));
+m, J = ADMM(x0,dobs,operators,parameters, ρ= 0.5, μ= 1.5,Ne=25,tolerance=1.0e-4);
+d_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
