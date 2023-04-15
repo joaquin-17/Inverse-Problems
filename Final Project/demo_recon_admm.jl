@@ -4,7 +4,7 @@ using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra #SeisReconstruc
 
 
 include("ADMM.jl")
-include("/home/aacedo/Desktop/GitHub/Non-Uniform-Dispersed-Source-Arrays-NU-DSA-/src/DSA_Tools/Tools.jl")
+include("Tools.jl")
 include("LocalFFTOp3d-padding.jl")
 
 
