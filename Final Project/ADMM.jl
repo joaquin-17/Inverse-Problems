@@ -89,8 +89,9 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
         q = LinearOperator(p,operators,parameters,adj=false);
         delta= InnerProduct(q,q) + μ*InnerProduct(p,p);
 
-        if delta == 0
-            delta=1.e-10;
+        if delta <= tol
+            #println("delta reached tolerance, ending at iteration ",iter)
+            break;
         end
 
         alpha= gamma/delta;
@@ -102,10 +103,10 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
         beta = gamma1/gamma;
         gamma = gamma1;
         p = s + beta*p;
-        if norms <= norms0*tol
-            println("Loop ended causde tolerance was reached",k)
-            break;
-        end
+        #if norms <= norms0*tol
+         #   println("Loop ended causde tolerance was reached",k)
+         #   break;
+        #end
         k = k+1;
         println(k)
         error = LinearOperator(m,operators,parameters,adj=false) - d_obs ;
@@ -137,7 +138,7 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
 
         b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # this is the problem
         #d_obs= LinearOperator(z,operators,parameters, adj=false) 
-        w,Ji= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-26)
+        w,Ji= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
         x= w .+z .-u;
         z= SoftThresholding.( x .+ u,ρ,μ)  # z-update
         u= u .+ (x .-z); #dual update, lagrange multiploier
