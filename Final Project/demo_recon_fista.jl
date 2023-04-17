@@ -47,8 +47,13 @@ Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
+<<<<<<< HEAD
 m1, J = ISTA(x0,dobs,operators,parameters,μ=0.01,Ni=100,tolerance=0.00001)
 d_rec1= real(LocalFFTOp(m1,false; patch_size, Noverlap, dims, normalize=true, padd=true));
+=======
+m1, J = ISTA(x0,dobs,operators,parameters,μ=0.5,Ni=25,tolerance=0.00001)
+d_rec1= real(LocalFFTOp(m1,false; patch_size, Noverlap, dims, normalize=true, padd=false));
+>>>>>>> 1c2a05fadccf69e8efb56c27165f0e27b84e33c1
 
 
 #m2, J = FISTA(x0,dobs,operators,parameters,0.5,50,0.0001);

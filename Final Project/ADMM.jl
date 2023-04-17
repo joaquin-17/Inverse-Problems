@@ -79,6 +79,9 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
     k=0;
     flag=0;
     J=zeros(Ni);
+
+
+    
     while k < Ni && flag == 0
         
         q = LinearOperator(p,operators,parameters,adj=false);
