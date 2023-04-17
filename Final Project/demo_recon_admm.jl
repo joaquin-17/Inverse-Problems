@@ -11,7 +11,7 @@ include("LocalFFTOp3d-padding.jl")
 
 println("1) Generate synthetic data:")
 
-#dt= 0.002;
+dt= 0.002;
 #d = SeisLinearEvents(;nt=250, nx1=128,dx1=12.5, nx2=128,dx2=12.5,tau=[0.25,0.4],p1=[-0.0001,-0.00015],p2=[0.0001,0.00015]);
 #shot=d;
 #shot=d[:,64,:];
