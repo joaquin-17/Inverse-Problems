@@ -161,9 +161,9 @@ function ISTA(x0,y,operators,parameters; μ= 0.5,Ni=150,tolerance=1.0e-5)
 
         #Update point to improve convergence rate  (ISTA --> FISTA)
         
-        t_k = t;
-        t = (0.5)*(1.0 + sqrt(1.0 + 4.0*(t_k)^2))
-        y_k = m + (t_k-1.0)/t*(m-m_k); 
+        #t_k = t;
+        #t = (0.5)*(1.0 + sqrt(1.0 + 4.0*(t_k)^2))
+        #y_k = m + (t_k-1.0)/t*(m-m_k); 
         
         
 
