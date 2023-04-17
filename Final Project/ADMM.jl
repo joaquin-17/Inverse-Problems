@@ -69,7 +69,8 @@ end
 
 function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
 
-    m=zeros(size(m0));
+    m=m0
+    #m=zeros(size(m0));
     r= d_obs - LinearOperator(m,operators,parameters,adj=false);
     s =  LinearOperator(r,operators,parameters,adj=true) - μ*m;
     p=copy(s);
@@ -79,6 +80,7 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
     k=0;
     flag=0;
     J=zeros(Ni);
+    J[1]=norm(m,2)
 
 
     
@@ -100,10 +102,10 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
         beta = gamma1/gamma;
         gamma = gamma1;
         p = s + beta*p;
-        #if norms <= norms0*tol
-         #   println("Loop ended causde tolerance was reached",k)
-          #  break;
-        #end
+        if norms <= norms0*tol
+            println("Loop ended causde tolerance was reached",k)
+            break;
+        end
         k = k+1;
         println(k)
         error = LinearOperator(m,operators,parameters,adj=false) - d_obs ;
@@ -111,7 +113,7 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
 
     end
 
-    return m #, J
+    return m, J
 end
 
 
@@ -124,6 +126,8 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
     w=zero(u);
     #Initialize cost function with x0 misfit.
     x0=randn(size(d_obs)); J=zeros(Float64, Ne); J[1]=norm(x0[:],2)^2; #
+    Ji=zeros(Ne);
+    Ji[1]=J[1]
 
     k=0;
     
@@ -131,9 +135,9 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
         
         k=k+1; #update counter
 
-        b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # thi is the problem
-        #d_obs= LinearOperator(b,operators,parameters, adj=false) 
-        w= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
+        b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # this is the problem
+        #d_obs= LinearOperator(z,operators,parameters, adj=false) 
+        w,Ji= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-26)
         x= w .+z .-u;
         z= SoftThresholding.( x .+ u,ρ,μ)  # z-update
         u= u .+ (x .-z); #dual update, lagrange multiploier
@@ -153,6 +157,6 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
         @show k
     end
      
-    return z, J;
+    return z, J, Ji
 
 end

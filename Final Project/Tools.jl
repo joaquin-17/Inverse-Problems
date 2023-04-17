@@ -8,7 +8,7 @@ include("ApplySource.jl");
 include("SourceOp.jl");
 include("DSAOp.jl");
 include("FFTOp.jl");
-include("Fista.jl");
+include("FISTA.jl");
 include("LinearOperator.jl");
 include("Power_method.jl");
 include("Soft_Thresholding.jl");
@@ -16,7 +16,7 @@ include("WeightingOp.jl");
 include("SamplingOp.jl");
 include("Wavelet.jl")
 include("Ormsby.jl")
-include("ricker.jl")
+include("Ricker.jl")
 include("SeisHypEvents.jl")
 
 
