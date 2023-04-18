@@ -89,10 +89,10 @@ function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
         q = LinearOperator(p,operators,parameters,adj=false);
         delta= InnerProduct(q,q) + μ*InnerProduct(p,p);
 
-        if delta <= tol
-            #println("delta reached tolerance, ending at iteration ",iter)
-            break;
-        end
+        ·#if delta <= tol
+         #   #println("delta reached tolerance, ending at iteration ",iter)
+         #   break;
+        #end
 
         alpha= gamma/delta;
         m = m + alpha*p;
@@ -158,6 +158,6 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
         @show k
     end
      
-    return z, J, Ji
+    return z, J,Ji
 
 end
