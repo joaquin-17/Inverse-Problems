@@ -1,6 +1,6 @@
 
 
-SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (ρ/(2*λ)),0)
+SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (λ/ρ),0)
 
 
 #=

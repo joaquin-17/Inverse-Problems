@@ -54,6 +54,6 @@ parameters= [Dict(:w =>S),Dict(:normalize=>true)];
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-m, J , Ji= ADMM(x0,dobs,operators,parameters, ρ= 0.25, μ= 1.5,Ne=25, Ni=25,tolerance=1.0e-25);
-d_rec=FFTOp(m,false);
+m, J , Ji= ADMM(x0,dobs,operators,parameters, ρ= 0.16, μ= 0.5,Ne=25, Ni=25,tolerance=1.0e-25);
+d_rec=real(FFTOp(m,false));
 #_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
