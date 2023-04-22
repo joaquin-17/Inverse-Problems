@@ -18,6 +18,7 @@ include("Wavelet.jl")
 include("Ormsby.jl")
 include("Ricker.jl")
 include("SeisHypEvents.jl")
+include("InnerProduct.jl")
 
 
 

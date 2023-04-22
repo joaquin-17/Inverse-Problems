@@ -1,6 +1,6 @@
 
 
-SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (λ/ρ),0)
+SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (ρ/(2*λ)),0)
 
 
 #=
@@ -67,46 +67,47 @@ end
 
 """
 
-function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-15)
+function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-6)
 
     m=m0
     #m=zeros(size(m0));
     r= d_obs - LinearOperator(m,operators,parameters,adj=false);
-    s =  LinearOperator(r,operators,parameters,adj=true) - μ*m;
+    s =  LinearOperator(r,operators,parameters,adj=true) - μ*m;  # ∇J
     p=copy(s);
 
-    gamma= InnerProduct(s,s);
-    norms0=sqrt(gamma); #norm of the gradient is used to stop.
-    k=0;
-    flag=0;
+    gamma= InnerProduct(s,s); #  ||∇J||²₂   
+    norms0=sqrt(gamma);  #||∇J||₂ => norm of the gradient at the beginining.
+    k=0; #Initialize counter
+    #flag=0;
     J=zeros(Ni);
-    J[1]=norm(m,2)
+    J[1]=(norm(r,2))^2
 
 
     
-    while k < Ni && flag == 0
+    while k < Ni #&& flag == 0
         
         q = LinearOperator(p,operators,parameters,adj=false);
         delta= InnerProduct(q,q) + μ*InnerProduct(p,p);
 
-        ·#if delta <= tol
-         #   #println("delta reached tolerance, ending at iteration ",iter)
-         #   break;
-        #end
+        if delta <= tol
+            #println("delta reached tolerance, ending at iteration ",iter)
+            break;
+        end
 
-        alpha= gamma/delta;
+        alpha= gamma/delta; #  ||∇J||²₂  /  ||∇J||²₂   +μ 
         m = m + alpha*p;
         r = r - alpha*q;
         s =  LinearOperator(r,operators,parameters,adj=true)  - μ*m;
-        gamma1  = InnerProduct(s,s);
-        norms  = sqrt(gamma1);
-        beta = gamma1/gamma;
-        gamma = gamma1;
-        p = s + beta*p;
-        #if norms <= norms0*tol
-         #   println("Loop ended causde tolerance was reached",k)
-         #   break;
-        #end
+        gamma1  = InnerProduct(s,s); #update  ||∇J||²₂   
+        norms  = sqrt(gamma1); #update ||∇J||₂   
+        beta = gamma1/gamma; # |∇Jk+1||₂ /|∇Jk||₂ 
+        gamma = gamma1; # save the new cost function
+        p = s + beta*p; 
+        if norms <= norms0*tol
+            println("Loop ended at iteration number k=",k)
+            println("At iteration k=$k is ||∇Jₖ||₂² ≤ $tol* ||∇J₀||₂²")
+            break;
+         end
         k = k+1;
         println(k)
         error = LinearOperator(m,operators,parameters,adj=false) - d_obs ;
@@ -146,7 +147,7 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
         aux=  LinearOperator(z,operators,parameters,adj=false)
         J[k] = sum(abs.(aux .- d_obs)).^2 + μ*sum(abs.(z))
 
-        #Tolerance check:
+        #Tolerance check: Mofidy
         if k > 1;
             ΔJ = abs(J[k] - J[k-1]);
             if ΔJ < tolerance;
