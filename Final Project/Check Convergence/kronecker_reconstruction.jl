@@ -2,10 +2,11 @@ using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra, HDF5 #SeisReco
 
 
 
-include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
+include("C:\\Users\\Joaquin\\Desktop\\Research\\Codes\\Inverse-Problems\\Final Project\\Tools.jl")
 
 include("CG.jl");
 include("DFT.jl");
+include("SamplingMatrix.jl")
 include("cond_number.jl")
 
 #Create synthetic data:
@@ -16,10 +17,10 @@ shot=d[:,64,:];
 shot=shot*(10^2)
 nt,nr=size(shot);
 d_obs = copy(shot);
-
+#=
 for i=1:nr
        p = rand()
-            if   p < 0.6
+            if   p < 0.5
                 d_obs[:,i] .= 0.0
             end
 end
@@ -27,23 +28,29 @@ end
   
 S = CalculateSampling(d_obs);
 d_obs = S.*shot; 
+=#
+
+for j=1:4:size(d_obs,2)
+    d_obs[:,j] .= 0.0
+end
 
 
+r=SamplingVector(d_obs[64,:])
 
 Ft=DFTmatrix(size(shot,1));
 Fx=DFTmatrix(size(shot,2));
 kronFxFt=kron(Fx,Ft); #Fx x Ft 
 
-R=SamplingMatrix(r,type="cs")
+R=SamplingMatrix(r,type="seismic")
+Nt=size(shot,1);
 T=diagm(ones(Nt));
 kronRT= kron(R,T);
 d=reshape(d_obs,length(d_obs)); # shot as a vector
 A=kronRT*kronFxFt;
-G=A'*A; 
+G=A*A'; 
 ρ=0.0
 
 λ,cn=k(G,ρ)
-
 
 #=
 
