@@ -80,7 +80,7 @@ end
 
 
 
-SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (ρ/(2*λ)),0)
+SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (λ/ρ),0)
 
 
 
@@ -116,6 +116,7 @@ function ADMM(A,y; x0=0.0, ρ= 1.0, λ=0.5, Ni=150, Ne=50, tol=1.0e-8)
         zcg= SoftThresholding.(xcg .+ ucg ,ρ,λ)  # z-update
         ucg= ucg .+ (xcg-zcg); #dual update, lagrange multiploier;
         
+        #=
         residual= T'*y .- (F*zcg); # residual between the data and reconstructed
         aux=abs.(residual)
       
@@ -131,10 +132,11 @@ function ADMM(A,y; x0=0.0, ρ= 1.0, λ=0.5, Ni=150, Ne=50, tol=1.0e-8)
 
             break;
         end
+        =#
         
             
 
     end
 
-    return zcg, Ji, Je
+    return zcg, Ji#, Je
 end
