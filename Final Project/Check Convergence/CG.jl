@@ -103,7 +103,7 @@ function ADMM(A,y; x0=0.0, ρ= 1.0, λ=0.5, Ni=150, Ne=50, tol=1.0e-8)
     #Initialize variables
     ucg=zeros(length(x0)); 
     zcg=copy(x0);
-    I = diagm( ones(size(G,1)));
+    I = diagm( ones(size(A,2)));
     Ac= vcat(A, sqrt(ρ)*I);
     yc=vcat(y, sqrt(ρ)* (zcg .- ucg))
     xcg=zero(ucg)

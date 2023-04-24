@@ -56,7 +56,7 @@ G=A'*A;
 xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
 m0=zeros(length(d_obs));
 z=copy(m0);
-I = diagm(ones(size(G,1)));
+I = diagm(ones(size(A,2)));
 Ac= vcat(A,sqrt(ρ)*I);
 yc=vcat(y, sqrt(ρ)* (z))
 xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
