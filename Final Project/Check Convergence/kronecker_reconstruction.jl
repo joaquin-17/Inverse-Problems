@@ -55,9 +55,9 @@ G=A*A';
 λ2,cn2=k(G,ρ[2]);
 λ3,cn3=k(G,ρ[3]);
 λ4,cn4=k(G,ρ[4]);
-λp5,cn5=k(G,ρ[5]);
-λp6,cn6=k(G,ρ[6]);
-λp7,cn7=k(G,ρ[7]);
+λ5,cn5=k(G,ρ[5]);
+λ6,cn6=k(G,ρ[6]);
+λ7,cn7=k(G,ρ[7]);
 #λp5,cn=k(G,0.0);
 cn=[cn1,cn2,cn3,cn4,cn5,cn6,cn7]
 
@@ -72,16 +72,17 @@ plot(sort(λ6,rev=true),label="ρ=10.0");
 plot(sort(λ7,rev=true),label="ρ=100.0");
 
 grid("True")
-xlabel("λ",fontsize=17)
+ylabel("λ",fontsize=15);
+xlabel("n",fontsize=15);
 legend()
 
 
 
 figure(2);
 
-plot(ρ,cn)
-xlabel("ρ",fontize=17)
-ylabel("κ(ρ)",fontsize=17)
+plot(ρ,round.(cn,digits=5))
+xlabel("ρ",fontsize=15)
+ylabel("κ(ρ)",fontsize=15)
 grid("True")
 
 #=
