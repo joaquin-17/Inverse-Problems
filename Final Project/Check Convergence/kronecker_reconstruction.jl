@@ -20,7 +20,7 @@ d_obs = copy(shot);
 
 for i=1:nr
        p = rand()
-            if   p < 0.5
+            if   p < 0.3
                 d_obs[:,i] .= 0.0
             end
 end
@@ -48,23 +48,53 @@ kronRT= kron(R,T);
 d=reshape(d_obs,length(d_obs)); # shot as a vector
 A=kronRT*kronFxFt;
 y=A*d;
-
-
-#G=A'*A; 
 #ρ=1.0
-#λ,cn=k(G,ρ)
+G=A*A'; 
+ρ=[0.0, 0.001, 0.01, 0.1, 1,10, 100]
+λ1,cn1=k(G,ρ[1]);
+λ2,cn2=k(G,ρ[2]);
+λ3,cn3=k(G,ρ[3]);
+λ4,cn4=k(G,ρ[4]);
+λp5,cn5=k(G,ρ[5]);
+λp6,cn6=k(G,ρ[6]);
+λp7,cn7=k(G,ρ[7]);
+#λp5,cn=k(G,0.0);
+cn=[cn1,cn2,cn3,cn4,cn5,cn6,cn7]
 
-#xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
-#m0=zeros(length(d_obs));
-#z=copy(m0);
-#Id = diagm(ones(size(A,2)));
-#Ac= vcat(A,sqrt(ρ)*Id);
-#yc=vcat(y, sqrt(ρ)* (z))
-#xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
+figure(1);
 
-m, J=  ADMM(A,y; x0= 0.0, ρ= 1.0, λ=0.5, Ni=150, Ne=50, tol=1.0e-8)
+plot(sort(λ1,rev=true),label="ρ=0.0");
+plot(sort(λ2,rev=true),label="ρ=0.001");
+plot(sort(λ3,rev=true),label="ρ=0.01");
+plot(sort(λ4,rev=true),label="ρ=0.1");;
+plot(sort(λ5,rev=true),label="ρ=1.0");;
+plot(sort(λ6,rev=true),label="ρ=10.0");
+plot(sort(λ7,rev=true),label="ρ=100.0");
+
+grid("True")
+xlabel("λ",fontsize=17)
+legend()
 
 
+
+figure(2);
+
+plot(ρ,cn)
+xlabel("ρ",fontize=17)
+ylabel("κ(ρ)",fontsize=17)
+grid("True")
+
+#=
+xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
+m0=zeros(length(d_obs));
+z=copy(m0);
+Id = diagm(ones(size(A,2)));
+Ac= vcat(A,sqrt(ρ)*Id);
+yc=vcat(y, sqrt(ρ)* (z))
+xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
+m, J=  ADMM(A,y; x0= 0.0, ρ= 2.0, λ=4.0, Ni=150, Ne=50, tol=1.0e-8)
+m=reshape(m, size(shot))
+=#
 #=
 
 # Do 1D Fourier
