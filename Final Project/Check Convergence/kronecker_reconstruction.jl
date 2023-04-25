@@ -71,9 +71,10 @@ plot(sort(λ5,rev=true),label="ρ=1.0");;
 plot(sort(λ6,rev=true),label="ρ=10.0");
 plot(sort(λ7,rev=true),label="ρ=100.0");
 
-grid("True")
+grid("True");
 ylabel("λ",fontsize=15);
 xlabel("n",fontsize=15);
+ylim([-10, 150])
 legend()
 
 
