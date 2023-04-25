@@ -2,7 +2,9 @@ using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra, HDF5 #SeisReco
 
 
 
-include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
+#include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
+include("C:\\Users\\Joaquin\\Desktop\\Research\\Codes\\Inverse-Problems\\Final Project\\Tools.jl")
+
 
 include("CG.jl");
 include("DFT.jl");
@@ -47,9 +49,11 @@ T=diagm(ones(Nt));
 kronRT= kron(R,T);
 d=reshape(d_obs,length(d_obs)); # shot as a vector
 A=kronRT*kronFxFt;
-y=A*d;
-#ρ=1.0
-G=A*A'; 
+y=kronRT*d;
+ρ=1.0
+G=A'*A; 
+
+#=
 ρ=[0.0, 0.001, 0.01, 0.1, 1,10, 100]
 λ1,cn1=k(G,ρ[1]);
 λ2,cn2=k(G,ρ[2]);
@@ -85,16 +89,18 @@ plot(ρ,round.(cn,digits=5))
 xlabel("ρ",fontsize=15)
 ylabel("κ(ρ)",fontsize=15)
 grid("True")
+=#
 
-#=
 xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
 m0=zeros(length(d_obs));
 z=copy(m0);
 Id = diagm(ones(size(A,2)));
 Ac= vcat(A,sqrt(ρ)*Id);
 yc=vcat(y, sqrt(ρ)* (z))
+
 xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
 m, J=  ADMM(A,y; x0= 0.0, ρ= 2.0, λ=4.0, Ni=150, Ne=50, tol=1.0e-8)
+#=
 m=reshape(m, size(shot))
 =#
 #=
