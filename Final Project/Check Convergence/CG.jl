@@ -80,8 +80,29 @@ end
 
 
 
-SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (λ/ρ),0)
+SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x) - (λ/ρ),0)
 
+
+function ADMM_CG(A,y,m0; ρ= 1.0, λ=0.5,tol=1e-8, Ni=150, Ne=50)
+
+    x0=m0
+    u=zeros(length(m0)); 
+    z=copy(m0);
+    I = diagm( ones(size(A,2)));
+    Ac= vcat(A, sqrt(ρ)*I);
+    yc=vcat(y, sqrt(ρ)* (z .- u))
+    x=zero(u)
+    for k=1:Ne;
+        yc=vcat(y, sqrt(ρ)* (z-u));
+        x, J=CG(Ac,yc,x0=x0,Ni=Ni,tol=1.0e-15)
+        #x= cgaq(Ac,yc,Ni) #nv(G +ρ*I)*(A'*(y) .+ ρ*(z - u)); #x-update
+        z= SoftThresholding.(x .+ u ,ρ,λ)  # z-update
+        u= u .+ (x-z); #dual update, lagrange multiploier
+    end
+
+    return z;
+
+end
 
 
 

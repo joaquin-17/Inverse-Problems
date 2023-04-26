@@ -2,8 +2,8 @@ using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra, HDF5 #SeisReco
 
 
 
-#include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
-include("C:\\Users\\Joaquin\\Desktop\\Research\\Codes\\Inverse-Problems\\Final Project\\Tools.jl")
+include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
+#include("C:\\Users\\Joaquin\\Desktop\\Research\\Codes\\Inverse-Problems\\Final Project\\Tools.jl")
 
 
 include("CG.jl");
@@ -110,27 +110,32 @@ legend()
 
 
 #xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
-#m0=zeros(length(d_obs));
+m0=zeros(length(d_obs));
 #z=copy(m0);
 #Id = diagm(ones(size(A,2)));
 #Ac= vcat(A,sqrt(ρ)*Id);
 #yc=vcat(y, sqrt(ρ)* (z))
 
 #xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
-m, J=  ADMM(A,y; x0= 0.0, ρ= 0.5, λ=5.0, Ni=5, Ne=25, tol=1.0e-8)
-
-aux=kronFxFt'*m;
-d_rec=real(reshape(aux,size(shot)));
-SeisPlotTX(d_rec)
+#m, J=  ADMM_CG(A,y; x0= 0.0, ρ=15.0, λ=25.0, Ni=5, Ne=25, tol=1.0e-8)
+m=ADMM_CG(A,y,m0; ρ= 15.0, λ=25.0,tol=1e-8, Ni=1, Ne=50)
+#aux=kronFxFt'*m;
+#d_rec=real(reshape(aux,size(shot)));
+#SeisPlotTX(d_rec)
 
 #m=reshape(m, size(shot));
 
-
+#=
 figure(3);
-subplot(121);
-SeisPlotTX(dobs1, style="wiggles", dy=dt, dx=12.5);
+subplot(221);
+SeisPlotTX(dobs1,fignum=3, style="wiggles", dy=dt, dx=12.5);
 xlabel("Offset [m]")
 ylabel("Time[sec]")
+subplot(222);
+SeisPlotTX(drec1,fignum=3, style="wiggles", dy=dt, dx=12.5);
+xlabel("Offset [m]")
+ylabel("Time[sec]")
+=#
 
 
 #=
@@ -157,3 +162,44 @@ for i=1:nt
 end
 =#
 
+
+
+fig = plt.figure(1);
+
+ax1=fig.add_subplot(121)
+im1=SeisPlotTX(d1,fignum=1, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=3);
+#ax1.set_title("CRG : ideal ", fontsize=15)
+ax1.set_xlabel("Offset [m]", fontsize=15)
+ax1.set_ylabel("Time [sec]", fontsize=15)
+#colorbar(shrink=0.4)
+ax1.legend(title="(a)",loc="upper right",bbox_to_anchor=(-0.60, 0.70, 0.60, 0.60),title_fontsize=15,framealpha=0.0001)
+
+
+ax2=fig.add_subplot(122)
+im2=SeisPlotTX(d2,fignum=1, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=3);
+ax2.set_xlabel("Offset [m]", fontsize=15)
+ax2.set_ylabel("Time [sec]", fontsize=15)
+#colorbar(shrink=0.4)
+ax2.legend(title="(b)",loc="upper right",bbox_to_anchor=(-0.60, 0.70, 0.60, 0.60),title_fontsize=15,framealpha=0.0001)
+
+
+figure(3, figsize=(10,17));
+subplot(121);
+SeisPlotTX(d3,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=5);
+xlabel("Offset [m]")
+ylabel("Time[sec]")
+subplot(122);
+SeisPlotTX(d4,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=5);
+xlabel("Offset [m]")
+ylabel("Time[sec]")
+tight_layout()
+#=
+subplot(223);
+SeisPlotTX(d3,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=2);
+xlabel("Offset [m]")
+ylabel("Time[sec]")
+subplot(224);
+SeisPlotTX(d4,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=2);
+xlabel("Offset [m]")
+ylabel("Time[sec]")
+=#

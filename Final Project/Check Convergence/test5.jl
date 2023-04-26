@@ -44,6 +44,7 @@ nt,nr=size(shot);
 d_obs = copy(shot);
 
 
+#=
 for i=1:nr
      #for i2=1:nx2
        p = rand()
@@ -57,8 +58,14 @@ end
 S = CalculateSampling(d_obs);
 d_obs = S.*shot; 
 #d_obs = SeisAddNoise(d_obs,1.0,L=5);
+=#
 
 
+for j=1:4:size(d_obs,2)
+    d_obs[:,j].= 0.0
+end
+
+d_obs[:,15:32] .= 0.0
 
 
 println("3) Get parameters:")
@@ -68,9 +75,9 @@ operators=[WeightingOp, FFTOp,WeightingOp];
 parameters= [Dict(:w =>S),Dict(:normalize=>true), Dict(:w =>ones(size(d_obs)))];
 
 
-m, J= IRLS(d_obs,operators,parameters; Ni=50,Ne=50,μ=0.0)
+#m, J= IRLS(d_obs,operators,parameters; Ni=50,Ne=50,μ=0.0)
 
-#m, Ji, Je= ADMM_CGLS(m0,d_obs,operators,parameters, ρ=15.0, μ= 20.0, Ni=50, Ne=50,tol=1.0e-8)
+m, Ji, Je= ADMM_CGLS(m0,d_obs,operators,parameters, ρ=0.5, μ= 1.0, Ni=50, Ne=50,tol=1.0e-8)
 
 
 d_rec=real(FFTOp(m,false));
