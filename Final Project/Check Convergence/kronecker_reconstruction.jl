@@ -2,8 +2,8 @@ using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra, HDF5 #SeisReco
 
 
 
-include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
-#include("C:\\Users\\Joaquin\\Desktop\\Research\\Codes\\Inverse-Problems\\Final Project\\Tools.jl")
+#include("/home/aacedo/Desktop/GitHub/Inverse-Problems/Final Project/Tools.jl")
+include("C:\\Users\\Joaquin\\Desktop\\Research\\Codes\\Inverse-Problems\\Final Project\\Tools.jl")
 
 
 include("CG.jl");
@@ -21,6 +21,8 @@ nt,nr=size(shot);
 d_obs = copy(shot);
 
 
+#=
+
 for i=1:nr
        p = rand()
             if   p < 0.5
@@ -31,15 +33,15 @@ end
   
 S = CalculateSampling(d_obs);
 d_obs = S.*shot; 
+=#
 
 
-#=
 for j=1:4:size(d_obs,2)
     d_obs[:,j].= 0.0
 end
 
 d_obs[:,15:32] .= 0.0
-=#
+
 
 r=SamplingVector(d_obs[64,:])
 
@@ -55,10 +57,10 @@ d=reshape(d_obs,length(d_obs)); # shot as a vector
 A=kronRT*kronFxFt;
 y=kronRT*d;
 ρ=1.0
-G=A'*A; 
+G=A*A'; 
 
 
-
+#=
 ρ=[0.0, 0.001, 0.01, 0.1, 1,10, 100]
 λ1,cn1=k(G,ρ[1]);
 λ2,cn2=k(G,ρ[2]);
@@ -69,6 +71,8 @@ G=A'*A;
 λ7,cn7=k(G,ρ[7]);
 #λp5,cn=k(G,0.0);
 cn=[cn1,cn2,cn3,cn4,cn5,cn6,cn7]
+
+
 
 figure(1, figsize=(10,5));
 
@@ -102,20 +106,18 @@ xlabel("ρ",fontsize=15)
 ylabel("κ(ρ)",fontsize=15)
 grid("True")
 legend()
+=#
 
 
-
-#=
-
-xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
-m0=zeros(length(d_obs));
-z=copy(m0);
-Id = diagm(ones(size(A,2)));
-Ac= vcat(A,sqrt(ρ)*Id);
-yc=vcat(y, sqrt(ρ)* (z))
+#xls= (G+ ρ*diagm(ones(size(G,1))))\ A'*y;
+#m0=zeros(length(d_obs));
+#z=copy(m0);
+#Id = diagm(ones(size(A,2)));
+#Ac= vcat(A,sqrt(ρ)*Id);
+#yc=vcat(y, sqrt(ρ)* (z))
 
 xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
-m, J=  ADMM(A,y; x0= 0.0, ρ= 2.0, λ=4.0, Ni=150, Ne=50, tol=1.0e-8)
+m, J=  ADMM(A,y; x0= 0.0, ρ= 3.0, λ=6.0, Ni=150, Ne=50, tol=1.0e-8)
 
 aux=kronFxFt'*m;
 d_rec=real(reshape(aux,size(shot)));
