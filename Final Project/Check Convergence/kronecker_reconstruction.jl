@@ -21,7 +21,7 @@ nt,nr=size(shot);
 d_obs = copy(shot);
 
 
-#=
+
 
 for i=1:nr
        p = rand()
@@ -33,15 +33,15 @@ end
   
 S = CalculateSampling(d_obs);
 d_obs = S.*shot; 
-=#
 
 
+#=
 for j=1:4:size(d_obs,2)
     d_obs[:,j].= 0.0
 end
 
 d_obs[:,15:32] .= 0.0
-
+=#
 
 r=SamplingVector(d_obs[64,:])
 
@@ -57,7 +57,7 @@ d=reshape(d_obs,length(d_obs)); # shot as a vector
 A=kronRT*kronFxFt;
 y=kronRT*d;
 ρ=1.0
-G=A*A'; 
+G=A'*A; 
 
 
 #=
@@ -116,15 +116,22 @@ legend()
 #Ac= vcat(A,sqrt(ρ)*Id);
 #yc=vcat(y, sqrt(ρ)* (z))
 
-xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
-m, J=  ADMM(A,y; x0= 0.0, ρ= 3.0, λ=6.0, Ni=150, Ne=50, tol=1.0e-8)
+#xcg, Jcg= CG(Ac,yc; x0=m0, Ni=50, tol=1.0e-15)
+m, J=  ADMM(A,y; x0= 0.0, ρ= 0.5, λ=5.0, Ni=5, Ne=25, tol=1.0e-8)
 
 aux=kronFxFt'*m;
 d_rec=real(reshape(aux,size(shot)));
 SeisPlotTX(d_rec)
 
 #m=reshape(m, size(shot));
-=#
+
+
+figure(3);
+subplot(121);
+SeisPlotTX(dobs1, style="wiggles", dy=dt, dx=12.5);
+xlabel("Offset [m]")
+ylabel("Time[sec]")
+
 
 #=
 
