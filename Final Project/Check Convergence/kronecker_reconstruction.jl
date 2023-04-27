@@ -185,11 +185,11 @@ ax2.legend(title="(b)",loc="upper right",bbox_to_anchor=(-0.60, 0.70, 0.60, 0.60
 
 figure(3, figsize=(10,17));
 subplot(121);
-SeisPlotTX(d3,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=5);
+SeisPlotTX(d_obs,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=3);
 xlabel("Offset [m]")
 ylabel("Time[sec]")
 subplot(122);
-SeisPlotTX(d4,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=5);
+SeisPlotTX(d_rec,fignum=3, style="wiggles", dy=dt, dx=12.5, wiggle_trace_increment=3);
 xlabel("Offset [m]")
 ylabel("Time[sec]")
 tight_layout()

@@ -61,12 +61,21 @@ d_obs = S.*shot;
 =#
 
 
-for j=1:4:size(d_obs,2)
+
+for j=1:2:size(d_obs,2)
     d_obs[:,j].= 0.0
 end
 
 d_obs[:,15:32] .= 0.0
 
+
+d_obs[:,55:75] .= 0.0
+
+S = CalculateSampling(d_obs);
+d_obs = S.*shot; 
+
+
+#d_obs = SeisAddNoise(d_obs,1.0,L=5);
 
 println("3) Get parameters:")
 
@@ -77,7 +86,7 @@ parameters= [Dict(:w =>S),Dict(:normalize=>true), Dict(:w =>ones(size(d_obs)))];
 
 #m, J= IRLS(d_obs,operators,parameters; Ni=50,Ne=50,μ=0.0)
 
-m, Ji, Je= ADMM_CGLS(m0,d_obs,operators,parameters, ρ=0.5, μ= 1.0, Ni=50, Ne=50,tol=1.0e-8)
+m, Ji, Je= ADMM_CGLS(m0,d_obs,operators,parameters, ρ=0.5, μ= 1.0, Ni=3, Ne=50,tol=1.0e-8)
 
 
 d_rec=real(FFTOp(m,false));
