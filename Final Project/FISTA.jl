@@ -99,6 +99,7 @@ function ISTA(x0,y,operators,parameters; λ= 0.5,Ni=50,tolerance=1.0e-3)
     t=1.0;
     ΔJ= 1e4;
     yk=copy(m);
+    perc_error = 1.0
     #T=μ/(2*α);
 
      
@@ -154,7 +155,7 @@ function FISTA(x0,y,operators,parameters; λ= 0.5,Ni=100,tolerance=1.0e-3)
     println("")
     println(" ==================================================")
     println(" Fast Iterative Soft Thresholding Algorithm (FISTA)")
-    println(" ===================================================")
+    println(" ==================================================")
     println("")
 
     #Initialize
@@ -163,10 +164,12 @@ function FISTA(x0,y,operators,parameters; λ= 0.5,Ni=100,tolerance=1.0e-3)
     η= 0.95/α;
     J=zeros(Float64, Ni+1);
     J[1]=norm(x0[:])^2;
-    ΔJ= 1e6; 
+    misfit0= J[1]; 
+    ΔJ = 1.0;
     m = zeros(Float64,size(x0));
     t=1.0;
     p = copy(m);
+   
   
 
 
@@ -194,16 +197,21 @@ function FISTA(x0,y,operators,parameters; λ= 0.5,Ni=100,tolerance=1.0e-3)
             misfit_term= sum(abs.(yp .- y).^2) #|| Am - y ||₂²
             regularization_term= sum(abs.(m)) #|| m ||₁
             J[k+1] = (1/2)*misfit_term + λ*regularization_term #loss function
+            misfit= J[k+1]
+            ΔJ= (abs(misfit0 - misfit))/misfit0; #Normalize 
 
             #FISTA tolerance criteria:
             
             if k> 1 
-                 ΔJ= abs(J[k] - J[k-1])/((J[k]+J[k-1])/2);
+                 #ΔJ= abs(J[k] - J[k-1])/((J[k]+J[k-1])/2);
                  if ΔJ < tolerance
-                    println(" ΔJ = $ΔJ  is < $tolerance. Loop ended at $k iterations.")
+                    println(" ΔJ = $ΔJ  is < than the tolerance = $tolerance. Loop ended at $k iterations.")
                     break
                 end
             end
+            
+            print("Iteration "); @show k
+
 
     end
         return m, J

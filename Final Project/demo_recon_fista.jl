@@ -50,7 +50,7 @@ Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-m, J = FISTA(x0,dobs,operators,parameters, λ= 1.0 ,Ni=25,tolerance=1.0e-3)
+m, J = FISTA(x0,dobs,operators,parameters, λ= 0.5 ,Ni=25,tolerance=1.0e-2)
 d_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
 
 diff= d .- d_rec;

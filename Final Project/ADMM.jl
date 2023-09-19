@@ -3,26 +3,6 @@
 SoftThresholding(x,ρ,λ) = sign(x)*max(abs(x)- (ρ/(2*λ)),0)
 
 
-#=
-
-function FFTOp(in,adj;normalize=true)
-	norm = normalize ? sqrt(length(in[:])) : 1.
-	if (adj)
-		out = fft(in)/norm
-	else
-		out = bfft(in)/norm
-	end
-	return out
-end	
-
-
-
-function WeightingOp(in,adj;w=1.0)
-
-        return in.*w;
-end
-
-=#
 
 function InnerProduct(in1,in2)
     
