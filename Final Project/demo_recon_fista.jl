@@ -1,19 +1,20 @@
 # Reconstruction Demo
 
-using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra,SeisReconstruction
+using PyPlot, FFTW, DSP, SeisProcessing, SeisPlot, LinearAlgebra#,SeisReconstruction
 
 
 include("FISTA.jl")
-
+include("LocalFFTOp3d-padding.jl")
+include("Tools.jl")
 
 
 println("1) Generate synthetic data:")
 
 dt= 0.002;
 
-d=SeisParabEvents(tau=[0.256, 0.512, 0.768] ,amp=[1.0, 0.5, -1.0], p2=[0.45,0.0, -0.45], 
-p1=[0.015,0.0, -0.015], dt=dt, nt=512,  
-dx1=10.0, nx1=128, dx2=10.0, nx2=128, f0= 25.0 );
+d=SeisParabEvents(tau=[0.256, 0.512, 0.768] ,amp=[1.0, 0.5, -1.0], p2=[0.3,0.0, -0.45], 
+p1=[0.15,0.0, -0.15], dt=dt, nt=512,  
+dx1=10.0, nx1=128, dx2=10.0, nx2=128, f0= 20.0 );
 
 
 #d = SeisLinearEvents(;nt=250, nx1=128,dx1=12.5, nx2=128,dx2=12.5,tau=[0.25,0.4],p1=[-0.0001,-0.00015],p2=[0.0001,0.00015]);
@@ -34,9 +35,11 @@ end
 
 S = CalculateSampling(dobs);
 dobs = S.*d; 
-patch_size=(64,32,32); #Patch size in LocalFourier Operator
-Noverlap=(32,16,16); #Overlap of patches in LocalFourier Operator
+patch_size=(32,32,32); #Patch size in LocalFourier Operator
+Noverlap=(16,16,16); #Overlap of patches in LocalFourier Operator
 dims=size(d); #Parameter to  ensure right dimensions with the LocalFourier transform
+
+
 
 println("3) Get parameters:")
 
@@ -47,15 +50,28 @@ Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-<<<<<<< HEAD
-m1, J = ISTA(x0,dobs,operators,parameters,μ=0.01,Ni=100,tolerance=0.00001)
-d_rec1= real(LocalFFTOp(m1,false; patch_size, Noverlap, dims, normalize=true, padd=true));
-=======
-m1, J = ISTA(x0,dobs,operators,parameters,μ=0.5,Ni=25,tolerance=0.00001)
-d_rec1= real(LocalFFTOp(m1,false; patch_size, Noverlap, dims, normalize=true, padd=false));
->>>>>>> 1c2a05fadccf69e8efb56c27165f0e27b84e33c1
+m, J = FISTA(x0,dobs,operators,parameters, λ= 1.0 ,Ni=25,tolerance=1.0e-3)
+d_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
+
+diff= d .- d_rec;
 
 
-#m2, J = FISTA(x0,dobs,operators,parameters,0.5,50,0.0001);
-#$d_rec2= real(FFTOp(m2,false));
-#c=nt*ns*nr;
+figure(1);
+subplot(131);
+SeisPlotTX(d[:,54,:],dy=0.002, cmap="gist_gray", fignum=1, vmin=minimum(d), vmax=maximum(d));  colorbar()
+subplot(132);
+SeisPlotTX(d_rec[:,54,:],dy=0.002, cmap="gist_gray", fignum=1, vmin=minimum(d), vmax=maximum(d));  colorbar()
+subplot(133);
+SeisPlotTX(diff[:,54,:],dy=0.002, cmap="gist_gray", fignum=1, vmin=minimum(d), vmax=maximum(d));  colorbar()
+gcf()
+
+
+figure(2);
+
+subplot(131);
+SeisPlotFK(d[:,54,:],dy=0.002, fignum=2); colorbar()
+subplot(132);
+SeisPlotFK(d_rec[:,54,:],dy=0.002, fignum=2) ;colorbar();#, vmin=minimum(d), vmax=maximum(d));
+subplot(133);
+SeisPlotFK(diff[:,54,:],dy=0.002, fignum=2);  colorbar()#, vmin=minimum(d), vmax=maximum(d));
+gcf()

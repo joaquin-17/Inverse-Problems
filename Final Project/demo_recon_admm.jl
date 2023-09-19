@@ -48,13 +48,41 @@ dims=size(d); #Parameter to  ensure right dimensions with the LocalFourier trans
 
 println("3) Get parameters:")
 
-x0 = randn(Float64,size(d)); #      ,spec_size(dobs,patch_size,Noverlap));
-operators=[WeightingOp, FFTOp];
-parameters= [Dict(:w =>S),Dict(:normalize=>true)];
+x0 = zeros(Float64,spec_size(dobs,patch_size,Noverlap));
+operators=[WeightingOp, LocalFFTOp];
+parameters= [Dict(:w =>S),
+Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true, :padd=>false)];
+
+#PARAMETERS FOR FFT
+#x0 = randn(Float64,size(d)); #      ,
+#operators=[WeightingOp, FFTOp];
+#parameters= [Dict(:w =>S),Dict(:normalize=>true)];
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-m, J , Ji= ADMM(x0,dobs,operators,parameters, ρ= 0.25, μ= 1.5,Ne=25, Ni=25,tolerance=1.0e-4);
-d_rec=FFTOp(m,false);
-#_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
-SeisPlotTX(d_rec, dy=dt);
+m, J= ADMM(x0,dobs,operators,parameters, ρ= 0.25, μ= 1.5,Ne=25, Ni=25,tolerance=1.0e-4);
+d_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
+diff= d .- d_rec;
+
+
+println("4) Reconstruction of the data: Inversion of the coefficients")
+
+figure(1);
+subplot(131);
+SeisPlotTX(d[:,54,:],dy=0.002, cmap="gist_gray", fignum=1, vmin=minimum(d), vmax=maximum(d));  colorbar()
+subplot(132);
+SeisPlotTX(d_rec[:,54,:],dy=0.002, cmap="gist_gray", fignum=1, vmin=minimum(d), vmax=maximum(d));  colorbar()
+subplot(133);
+SeisPlotTX(diff[:,54,:],dy=0.002, cmap="gist_gray", fignum=1, vmin=minimum(d), vmax=maximum(d));  colorbar()
+gcf()
+
+
+figure(2);
+
+subplot(131);
+SeisPlotFK(d[:,54,:],dy=0.002, fignum=2); colorbar()
+subplot(132);
+SeisPlotFK(d_rec[:,54,:],dy=0.002, fignum=2) ;colorbar();
+subplot(133);
+SeisPlotFK(diff[:,54,:],dy=0.002, fignum=2);  colorbar();
+gcf()
