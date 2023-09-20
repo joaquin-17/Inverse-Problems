@@ -159,7 +159,7 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
   
        println("-----------------------------------------------")
        print("Monitoring iteration number "); @show k 
-       print("Monitoring differences in the cost internal function throughout the iterations "); @show ΔJi
+      # print("Monitoring differences in the cost internal function throughout the iterations "); @show ΔJi
        print("Monitoring differences in the cost external function throughout the iterations "); @show ΔJe
        println("-----------------------------------------------")
 
