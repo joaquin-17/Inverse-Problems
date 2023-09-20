@@ -56,7 +56,7 @@ Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-m, J= ADMM(x0,dobs,operators,parameters, ρ= 0.25, μ= 1.5,Ne=25, Ni=25,tolerance=1.0e-4);
+m, J= ADMM(x0,dobs,operators,parameters, ρ= 0.25, μ= 1.5,Ne=10, Ni=15,tolerance=1.0e-4);
 d_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
 diff= d .- d_rec;
 
