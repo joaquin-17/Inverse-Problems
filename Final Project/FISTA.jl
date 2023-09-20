@@ -164,8 +164,8 @@ function FISTA(x0,y,operators,parameters; λ= 0.5,Ni=100,tolerance=1.0e-3)
     η= 0.95/α;
     J=zeros(Float64, Ni+1);
     J[1]=norm(x0[:])^2;
-    misfit0= J[1]; 
-    ΔJ = 1.0;
+    #misfit0= J[1]; 
+    ΔJ = J[1];
     m = zeros(Float64,size(x0));
     t=1.0;
     p = copy(m);
@@ -180,38 +180,41 @@ function FISTA(x0,y,operators,parameters; λ= 0.5,Ni=100,tolerance=1.0e-3)
             k=k+1       
             
             ##Update model with FISTA##
-            m_old = m #mk= m;
-            Am=LinearOperator(p,operators,parameters,adj=false)
+            m_old = m; #mk= m;
+            Am=LinearOperator(p,operators,parameters,adj=false);
             r= Am .-y; #residual= (A*x.-y)
-            ∇fₖ=LinearOperator(r,operators,parameters,adj=true)
-            m = p .-η*∇fₖ; #update
+            ∇fₖ=LinearOperator(r,operators,parameters,adj=true); #A'(r)
+            m = p .- η*∇fₖ; #update
             m = SoftThresholding.(m,η,λ); #soft-thershold update
             
             ##FISTA acceleration step
-            t_old=t
-            t = (0.5)*(1.0 + sqrt(1.0 + 4.0*(t_old)^2))
+            t_old=t;
+            t = (0.5)*(1.0 + sqrt(1.0 + 4.0*(t_old)^2));
             p = m +((t_old-1.0)/t)*(m-m_old);
 
             #Update cost function
-            yp= LinearOperator(m,operators,parameters,adj=false) #predicted
-            misfit_term= sum(abs.(yp .- y).^2) #|| Am - y ||₂²
-            regularization_term= sum(abs.(m)) #|| m ||₁
-            J[k+1] = (1/2)*misfit_term + λ*regularization_term #loss function
-            misfit= J[k+1]
-            ΔJ= (abs(misfit0 - misfit))/misfit0; #Normalize 
-
+            yp= LinearOperator(m,operators,parameters,adj=false); #predicted
+            misfit_term= sum(abs.(yp .- y).^2); #|| Am - y ||₂²
+            regularization_term= sum(abs.(m)); #|| m ||₁
+            J[k+1] = (1/2)*misfit_term + λ*regularization_term; #loss function
+            #misfit= J[k+1]
+            #ΔJ= (abs(misfit0 - misfit))/misfit0; #Normalize 
+           
             #FISTA tolerance criteria:
             
-            if k> 1 
-                 #ΔJ= abs(J[k] - J[k-1])/((J[k]+J[k-1])/2);
+            if k> 1
+                 ΔJ= abs(J[k] - J[k-1])/((J[k]+J[k-1])/2);
                  if ΔJ < tolerance
-                    println(" ΔJ = $ΔJ  is < than the tolerance = $tolerance. Loop ended at $k iterations.")
+                    println("Loop ended at $k iterations.")
+                    println("REASON: ")
+                    println(" ΔJ = $ΔJ  is < than the tolerance = $tolerance used.")
                     break
                 end
             end
-            
-            print("Iteration "); @show k
-
+            println("-----------------------------------------------")
+            print("Monitoring iteration number "); @show k 
+            print("Monitoring differences in cost function throughout the iterations "); @show ΔJ
+            println("-----------------------------------------------")
 
     end
         return m, J
