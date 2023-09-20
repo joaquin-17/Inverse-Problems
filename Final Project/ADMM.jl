@@ -49,14 +49,15 @@ end
 
 function CGLS(m0,d_obs, operators,parameters; μ=0.5, Ni=100, tol=1.0e-6)
 
-    m=m0
+    m=copy(m0);
     #m=zeros(size(m0));
-    r= d_obs - LinearOperator(m,operators,parameters,adj=false);
+    r= d_obs - LinearOperator(m,operators,parameters,adj=false); #residual
     s =  LinearOperator(r,operators,parameters,adj=true) - μ*m;  # ∇J
     p=copy(s);
 
     gamma= InnerProduct(s,s); #  ||∇J||²₂   
     norms0=sqrt(gamma);  #||∇J||₂ => norm of the gradient at the beginining.
+    
     k=0; #Initialize counter
     #flag=0;
     J=zeros(Ni);
@@ -101,15 +102,29 @@ end
 
 function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tolerance=1.0e-5,)
    
+    #CHANGE μ to be λ but consider how that will affect the CGLS.
+    #change z to be m 
+    #Change m0 to be x0
    
     ρ=ρ;
-    u=zeros(size(m0)); 
+    #Initialize variables
+    u=zeros(size(m0));
     z=copy(u);
-    w=zero(u);
+    w=zero(u); #Lagrange multiplier
     #Initialize cost function with x0 misfit.
-    x0=randn(size(d_obs)); J=zeros(Float64, Ne); J[1]=norm(x0[:],2)^2; #
+    x0=randn(size(d_obs));  #SO FAR ONLY USED TO INITIALIZE THE COST FUNCTIONS.
+
+    #External cost function for ADMM
+    Je=zeros(Float64, Ne+1);
+    Je[1]=norm(x0[:],2)^2;
+    #Internal cost function for CGLS
     Ji=zeros(Ne);
-    Ji[1]=J[1]
+    Ji[1]=norm(x0[:],2)^2;
+    
+    #Initialize difference 
+    ΔJe = Je[1];
+    #ΔJi = Ji[1];
+
 
     k=0;
     
@@ -117,28 +132,39 @@ function ADMM( m0,d_obs,operators,parameters; ρ= 1.0, μ= 1.8, Ni=1,Ne=50, tole
         
         k=k+1; #update counter
 
-        b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # this is the problem
-        #d_obs= LinearOperator(z,operators,parameters, adj=false) 
-        w,Ji= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
-        x= w .+z .-u;
-        z= SoftThresholding.( x .+ u,ρ,μ)  # z-update
-        u= u .+ (x .-z); #dual update, lagrange multiploier
+        #Update model with ADMM
+        b=  -1*LinearOperator(z.- u ,operators, parameters, adj=false) .+ d_obs; # Call CGLS,this is the problem, why?
+        w, Ji= CGLS(m0,b,operators, parameters; μ= ρ, Ni=Ni, tol=1.0e-15)
+        x= w .+z .-u; #Variable change
+        z= SoftThresholding.( x .+ u,ρ,μ)  #Soft-Thersholding, z-update
+        u= u .+ (x .-z); #Dual update ==> lagrange multiploier
         
-        aux=  LinearOperator(z,operators,parameters,adj=false)
-        J[k] = sum(abs.(aux .- d_obs)).^2 + μ*sum(abs.(z))
 
-        #Tolerance check: Mofidy
-        if k > 1;
-            ΔJ = abs(J[k] - J[k-1]);
-            if ΔJ < tolerance;
-                  println(" ΔJ = $ΔJ  is  < $tolerance. Tolerance error reached adn loop ended with $k iterations.");
-                  break
-            end
-        end
+        #Update external cost function
+        yp=  LinearOperator(z,operators,parameters,adj=false); #predicted
+        misfit_term= sum(abs.(yp .- d_obs).^2); #|| Am - y ||₂²
+        regularization_term= sum(abs.(z)); #|| m ||₁
+        Je[k+1] = (1/2)*misfit_term + μ*regularization_term; # external loss function
+
+        #ADMM tolerance criteria
+        if k> 1
+            ΔJe= abs(Je[k] - Je[k-1])/((Je[k]+Je[k-1])/2);
+            if ΔJe < tolerance
+               println("Loop ended at $k iterations.")
+               println("REASON: ")
+               println(" ΔJe = $ΔJe  is < than the tolerance = $tolerance used.")
+               break
+           end
+       end
   
-        @show k
+       println("-----------------------------------------------")
+       print("Monitoring iteration number "); @show k 
+       print("Monitoring differences in the cost internal function throughout the iterations "); @show ΔJi
+       print("Monitoring differences in the cost external function throughout the iterations "); @show ΔJe
+       println("-----------------------------------------------")
+
     end
      
-    return z, J,Ji
+    return z, Je
 
 end

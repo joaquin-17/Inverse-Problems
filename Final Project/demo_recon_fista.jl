@@ -17,7 +17,8 @@ p1=[0.15,0.0, -0.15], dt=dt, nt=512,
 dx1=10.0, nx1=64, dx2=10.0, nx2=64, f0= 20.0 );
 
 
-#d = SeisLinearEvents(;nt=512, nx1=64 ,dx1=12.5, nx2=64,dx2=12.5,tau=[0.15,0.25,0.4],p1=[-0.0001,-0.00015,-0.0002],p2=[0.0001,0.00015,0.0002]);
+#d = SeisLinearEvents(;nt=512, nx1=64 ,dx1=12.5, nx2=64,dx2=12.5,
+#tau=[0.15,0.25,0.4],p1=[-0.0001,-0.00015,-0.0002],p2=[0.0001,0.00015,0.0002]);
 
 #shot=d;
 #shot=d[:,32,:];
@@ -35,8 +36,8 @@ end
 
 S = CalculateSampling(dobs);
 dobs = S.*d; 
-patch_size=(32,32,32); #Patch size in LocalFourier Operator
-Noverlap=(16,16,16); #Overlap of patches in LocalFourier Operator
+patch_size=(32,16,16); #Patch size in LocalFourier Operator
+Noverlap=(16,8,8); #Overlap of patches in LocalFourier Operator
 dims=size(d); #Parameter to  ensure right dimensions with the LocalFourier transform
 
 
@@ -50,7 +51,7 @@ Dict(:patch_size=>patch_size, :Noverlap=>Noverlap, :dims=>dims, :normalize=>true
 
 println("4) Reconstruction of the data: Inversion of the coefficients")
 
-m, J = FISTA(x0,dobs,operators,parameters, λ=0.1 ,Ni=350,tolerance=1.0e-4)
+m, J = FISTA(x0,dobs,operators,parameters, λ=0.5 ,Ni=350,tolerance=1.0e-4)
 d_rec= real(LocalFFTOp(m,false; patch_size, Noverlap, dims, normalize=true, padd=true));
 
 diff= d .- d_rec;
